@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SİGORTA ÇAPRAZ SATIŞ DESTEK SİSTEMİ | V1 SÜRÜMÜ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+                :root { 
+            --sidebar-bg: #0f172a;
+            --sidebar-gradient: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            --active-item: rgba(56, 189, 248, 0.1);
+            --accent-glow: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        
+        body { background-color: #f1f5f9; font-family: 'Outfit', sans-serif; padding-bottom: 60px; }
+        
+        /* --- SIDEBAR --- */
+        .sidebar { 
+            height: 100vh; 
+            width: 280px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            background: var(--sidebar-gradient); 
+            color: white; 
+            z-index: 1000; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.15);
+            overflow-y: auto; 
+        }
+        
+        
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-track { background: #0f172a; }
+        .sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        
+        .sidebar-brand { 
+            padding: 40px 20px 30px; 
+            text-align: center; 
+            flex-shrink: 0; 
+        }
+        .brand-title {
+            font-family: 'Rajdhani', sans-serif; 
+            font-weight: 700; 
+            font-size: 26px; 
+            line-height: 1.1;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #38bdf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+            animation: shine 4s linear infinite;
+        }
+        @keyframes shine { 
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .version-badge {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            font-size: 10px;
+            color: var(--accent-glow);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        
+        .nav-container { padding: 0 15px; margin-top: 20px; flex-shrink: 0; }
+        .nav-link { 
+            color: var(--text-muted); 
+            padding: 14px 20px; 
+            margin-bottom: 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease; 
+            font-weight: 500; 
+            font-size: 15px; 
+            display: flex;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+        .nav-link i { width: 24px; font-size: 18px; margin-right: 12px; transition: 0.3s; }
+        
+        .nav-link:hover { 
+            color: white; 
+            background: rgba(255,255,255,0.04);
+            transform: translateX(5px);
+        }
+        .nav-link.active { 
+            background: var(--active-item); 
+            color: var(--accent-glow);
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+        .nav-link.active i { color: var(--accent-glow); }
+        .nav-link.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        
+        .dev-profile {
+            margin: 20px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px 20px; /* Padding artırıldı */
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .dev-profile:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .avatar-ring {
+            width: 80px; height: 80px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+        .avatar-img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover; /* Resmi sığdırır */
+            border: 3px solid #0f172a;
+            display: block;
+        }
+        
+        .dev-name { font-size: 18px; font-weight: 700; color: white; margin-bottom: 2px; }
+        .dev-role { font-size: 13px; color: #94a3b8; font-weight: 400; margin-bottom: 20px; }
+        
+        
+        .social-row { 
+            display: flex; 
+            justify-content: center; 
+            gap: 12px; 
+            width: 100%;
+        }
+        
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px !important;       
+            height: 45px !important;      
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #cbd5e1;
+            font-size: 20px;   
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .social-btn.linkedin:hover { 
+            background: #0077b5; 
+            color: white; 
+            border-color: #0077b5;
+            box-shadow: 0 5px 15px rgba(0, 119, 181, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .social-btn.email:hover { 
+            background: #ea4335; 
+            color: white; 
+            border-color: #ea4335;
+            box-shadow: 0 5px 15px rgba(234, 67, 53, 0.4);
+            transform: translateY(-3px);
+        }
+
+                .license-footer {
+            font-size: 10px;
+            color: #475569;
+            text-align: center;
+            padding: 10px 0 20px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            margin: 0 20px;
+            flex-shrink: 0;
+        }
+
+                .main-content { margin-left: 280px; padding: 30px; transition: filter 0.3s ease; }
+        .card-custom { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 25px; }
+        .card-header-custom { background: white; padding: 20px 25px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #334155; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
+
+        .grid-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .form-check-custom { background: white; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; font-size: 13px; font-weight: 500; color: #475569; }
+        .form-check-custom:hover { border-color: #3b82f6; background: #eff6ff; color: #1e293b; }
+        .form-check-input { margin-right: 10px; cursor: pointer; transform: scale(1.1); }
+        .existing-check { border-left: 3px solid #10b981; }
+
+        .offer-row { transition: 0.2s; cursor: pointer; border-radius: 8px; }
+        .offer-row:hover { background-color: #f8fafc; transform: scale(1.005); }
+        .offer-chk { transform: scale(1.3); cursor: pointer; }
+
+        #printOnlyArea { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            .sidebar, .modal, .no-print { display: none !important; }
+            #printOnlyArea, #printOnlyArea * { visibility: visible; }
+            #printOnlyArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 40px; background: white; }
+            body { background: white; }
+        }
+        
+        .modal-backdrop.show { opacity: 0.95; background-color: #0f172a; }
+        .blur-bg { filter: blur(8px); pointer-events: none; user-select: none; }
+    </style>
+</head>
+<body>
+
+    <div class="modal fade" id="uploadModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header bg-dark text-white border-0 py-4 justify-content-center">
+                    <h5 class="modal-title fw-bold" style="font-family: 'Rajdhani', sans-serif; letter-spacing: 2px;">
+                        <i class="fas fa-server me-2 text-info"></i> SİSTEM BAŞLATILIYOR
+                    </h5>
+                </div>
+                <div class="modal-body p-5 text-center">
+                    <div class="mb-4">
+                        <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                            <i class="fas fa-database fa-3x text-secondary"></i>
+                        </div>
+                        <p class="text-muted mt-3">Analiz motorunu başlatmak için<br><strong>sigorta_db.xlsx</strong> dosyasını yükleyin.</p>
+                    </div>
+                    <input type="file" id="modalFile" class="form-control form-control-lg mb-3" accept=".xlsx" onchange="handleFileFromModal(this)">
+                    <div id="modalError" class="alert alert-danger" style="display:none; font-size:12px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar no-print">
+        <div class="sidebar-brand">
+            <div class="brand-title">SİGORTA ÇAPRAZ SATIŞ<br>DESTEK SİSTEMİ</div>
+            <span class="version-badge">V1</span>
+        </div>
+        
+        <div class="nav-container">
+            <a class="nav-link active" href="#"><i class="fas fa-chart-pie"></i> Analiz & Teklif</a>
+            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">
+                <i class="fas fa-users-slash"></i> Müşteri Havuzu <span class="badge bg-dark ms-auto" style="font-size:9px; opacity:0.5;">YAKINDA</span>
+            </a>
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+
+        <div class="dev-profile">
+            <div class="avatar-ring">
+                <img src="https://media.licdn.com/dms/image/v2/D4D03AQEzvXjrWaVQLA/profile-displayphoto-scale_400_400/B4DZsEf5rKJoAg-/0/1765307030818?e=1770249600&v=beta&t=I1jXb3bQ1GbPvM-0Qk1wuGtWC1P6_nNpn7JDETqVoDI" alt="Batuhan Bayatlı" class="avatar-img">
+            </div>
+            
+            <div class="dev-name">Batuhan Bayatlı</div>
+            <div class="dev-role">Geliştirici & Tasarımcı</div>
+            
+            <div class="social-row">
+                <a href="https://www.linkedin.com/in/batuhanbayatlı" target="_blank" class="social-btn linkedin" title="LinkedIn">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+                <a href="mailto:bayatlibatuhan@gmail.com" class="social-btn email" title="E-Posta">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="license-footer">
+            SİSTEM LİSANSI: <strong>ENTERPRISE V1</strong><br>
+            2026
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContainer">
+        <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+            <div>
+                <h3 class="fw-bold text-dark mb-0" style="font-family: 'Rajdhani', sans-serif;">SATIŞ VE TEKLİF ROBOTU</h3>
+                <small class="text-muted">Veritabanı Durumu: <span class="badge bg-success rounded-pill px-3">ONLINE</span></small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm" onclick="resetForm()"><i class="fas fa-trash-alt me-2"></i>Ekranı Temizle</button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5 no-print">
+                <div class="card-custom h-100">
+                    <div class="card-header-custom">
+                        <span><i class="fas fa-user-edit me-2 text-primary"></i> MÜŞTERİ BİLGİLERİ</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-secondary">AD SOYAD</label>
+                                <input type="text" class="form-control" id="custName" placeholder="Müşteri Adı">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-secondary">E-POSTA (Opsiyonel)</label>
+                                <input type="email" class="form-control" id="custEmail" placeholder="Teklif gönderimi için...">
+                            </div>
+                            <div class="col-7">
+                                <label class="form-label fw-bold small text-secondary">DOĞUM TARİHİ</label>
+                                <input type="date" class="form-control" id="custDob" onchange="calculateAge()">
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label fw-bold small text-secondary">YAŞ</label>
+                                <input type="number" class="form-control bg-light" id="custAge" placeholder="Otomatik" readonly>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label class="form-label fw-bold small text-secondary">CİNSİYET</label>
+                                <select class="form-select" id="custGender">
+                                    <option value="E">Erkek</option>
+                                    <option value="K">Kadın</option>
+                                    <option value="O">Belirtilmemiş</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">MESLEK</label>
+                            <input type="text" class="form-control mb-1" id="jobSearch" placeholder="Meslek Ara..." onkeyup="filterJobs()">
+                            <select class="form-select shadow-sm" id="custJob" size="3" style="display:none;" onchange="selectJob()">
+                                </select>
+                            <div id="selectedJobDisplay" class="mt-1 p-2 bg-primary bg-opacity-10 border border-primary rounded text-primary fw-bold small" style="display:none;">
+                                <span id="jobText"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">VARLIKLAR & HOBİLER</label>
+                            <input type="text" class="form-control form-control-sm mb-2" id="assetSearch" placeholder="Filtrele..." onkeyup="filterAssets()">
+                            <div class="grid-box" id="assetContainer"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-success">MEVCUT POLİÇELER (Varsa)</label>
+                            <input type="text" class="form-control form-control-sm mb-2" id="existingSearch" placeholder="Ürün Ara..." onkeyup="filterExisting()">
+                            <div class="grid-box border-success" id="existingContainer" style="background:#f0fdf4;"></div>
+                        </div>
+
+                        <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" onclick="runEngine()">
+                            <i class="fas fa-search-dollar me-2"></i> FIRSATLARI ANALİZ ET
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card-custom h-100">
+                    <div class="card-header-custom no-print">
+                        <span><i class="fas fa-list-alt me-2 text-primary"></i> ANALİZ SONUÇLARI & SEÇİM</span>
+                        <div><span class="badge bg-warning text-dark me-2">Taslak Modu</span></div>
+                    </div>
+                    <div class="p-4" style="height: 100%; overflow-y: auto;">
+                        <div id="emptyState" class="text-center mt-5 no-print">
+                            <i class="fas fa-robot fa-4x text-muted mb-4 opacity-25"></i>
+                            <h5 class="text-muted fw-bold">Bot Hazır</h5>
+                            <p class="text-muted small">Müşteri verilerini girin, sistem satılabilecek ürünleri listelesin.</p>
+                        </div>
+
+                        <div id="resultsArea" style="display:none;">
+                            <div class="alert alert-info border-0 shadow-sm mb-4">
+                                <h6 class="fw-bold mb-1" style="font-size:14px;"><i class="fas fa-info-circle me-2"></i>Tespit Edilen Riskler (Acenta Görünümü)</h6>
+                                <small id="detectedTags" class="d-block mt-1"></small>
+                            </div>
+                            <h6 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="fas fa-check-square me-2"></i> TEKLİF EDİLECEK ÜRÜNLERİ SEÇİN</h6>
+                            <form id="offerForm"><div id="recommendationList"></div></form>
+                            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                                <button class="btn btn-dark flex-grow-1" onclick="generatePDF()"><i class="fas fa-file-pdf me-2"></i> PDF Teklif Oluştur</button>
+                                <button class="btn btn-success flex-grow-1" onclick="sendMail()"><i class="fas fa-envelope-open-text me-2"></i> Müşteriye Mail At</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="printOnlyArea">
+        <div class="text-center mb-5 border-bottom pb-4">
+            <h1 class="fw-bold" style="font-family: 'Rajdhani', sans-serif; letter-spacing: 3px; color: #0f172a;">RESMİ SİGORTA TEKLİFİ</h1>
+            <p class="text-muted">Sayın <span id="p_name" class="fw-bold fs-5"></span> için özel olarak hazırlanmıştır.</p>
+            <div class="d-flex justify-content-between mt-4">
+                <div class="text-start">
+                    <small class="text-muted d-block fw-bold" style="font-size:10px;">MÜŞTERİ BİLGİLERİ</small>
+                    <span id="p_customer_info" class="fw-bold"></span><br><span id="p_job"></span>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block fw-bold" style="font-size:10px;">TEKLİF TARİHİ</small>
+                    <strong id="p_date"></strong><br><small class="text-muted">Ref No: <span id="p_ref"></span></small>
+                </div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h5 class="fw-bold text-uppercase border-bottom pb-2 mb-3" style="font-size: 14px; color: #334155;">Mevcut Sigorta Portföyü</h5>
+            <div class="bg-light p-3 rounded border"><p id="p_existing" class="mb-0 fw-bold text-success"></p></div>
+        </div>
+        <div class="mb-5">
+            <h5 class="fw-bold text-uppercase bg-dark text-white p-2 mb-3 rounded-top" style="font-size: 14px;">Önerilen Ürün ve Teminatlar</h5>
+            <table class="table">
+                <thead class="table-light"><tr><th scope="col">Ürün Adı</th><th scope="col">Kapsam / Açıklama</th><th scope="col" class="text-end">Durum</th></tr></thead>
+                <tbody id="p_products_table"></tbody>
+            </table>
+        </div>
+        <div class="mt-5 pt-5 border-top row">
+            <div class="col-8"><small class="text-muted" style="font-size: 10px;">Bu belge, Sigorta Karar Destek Sistemi V1 ile oluşturulmuştur.<br>Fiyatlar ve teminatlar poliçe kesim tarihinde değişiklik gösterebilir.</small></div>
+            <div class="col-4 text-center"><div style="height: 40px;"></div><div class="border-top w-75 mx-auto pt-2 fw-bold" style="font-size: 12px;">Yetkili Acente İmza / Kaşe</div></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        
+        let SESSION = {};
+        
+                (function initSession() {
+            const stored = localStorage.getItem('user_session');
+            if(!stored) {
+                // Giriş yoksa Login sayfasına at
+                window.location.href = 'index.html';
+                return;
+            }
+            SESSION = JSON.parse(stored);
+
+            
+            const footerText = document.querySelector('.license-footer strong');
+            if(footerText) {
+                if(SESSION.type === 'PRO') {
+                    footerText.innerText = "PRO LİSANS (SINIRSIZ)";
+                    footerText.className = "text-success"; // Yeşil yap
+                } else {
+                    let usage = parseInt(localStorage.getItem('demo_usage') || '0');
+                    let remaining = 30 - usage;
+                    footerText.innerText = `DEMO (KALAN: ${remaining})`;
+                    footerText.className = "text-warning"; // Sarı yap
+                }
+            }
+        })();
+
+        // --- DEĞİŞKENLER ---
+        let DB = { JOBS: [], ASSETS: [], PRODUCTS: [] };
+        let selectedJobID = null;
+        let myModal; 
+        let currentAnalysis = {}; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                myModal = new bootstrap.Modal(document.getElementById('uploadModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                myModal.show();
+                document.getElementById('mainContainer').classList.add('blur-bg');
+            } catch (e) { console.error(e); }
+        });
+
+        
+        function handleFileFromModal(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    DB.JOBS = XLSX.utils.sheet_to_json(workbook.Sheets['MESLEK']);
+                    DB.ASSETS = XLSX.utils.sheet_to_json(workbook.Sheets['VARLIKLAR']);
+                    DB.PRODUCTS = XLSX.utils.sheet_to_json(workbook.Sheets['URUNLER']);
+
+                    myModal.hide();
+                    document.getElementById('mainContainer').classList.remove('blur-bg');
+                    
+                    renderJobsList(DB.JOBS);
+                    renderAssets(DB.ASSETS);
+                    renderExistingProducts(DB.PRODUCTS);
+                } catch (err) {
+                    alert("Dosya Hatası: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        
+        function calculateAge() {
+            const dobInput = document.getElementById('custDob').value;
+            if(!dobInput) return;
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) { age--; }
+            document.getElementById('custAge').value = age;
+        }
+
+        function renderJobsList(jobs) {
+            const select = document.getElementById('custJob');
+            select.innerHTML = '';
+            jobs.sort((a,b) => a.MESLEK.localeCompare(b.MESLEK));
+            jobs.forEach(job => {
+                let opt = document.createElement('option');
+                opt.value = job.MESLEK_NO; opt.text = job.MESLEK;
+                select.appendChild(opt);
+            });
+        }
+        function filterJobs() {
+            const term = document.getElementById('jobSearch').value.toLowerCase();
+            const select = document.getElementById('custJob');
+            const options = select.getElementsByTagName('option');
+            if(term.length > 0) select.style.display = 'block'; else select.style.display = 'none';
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].text.toLowerCase().includes(term)) options[i].style.display = ""; else options[i].style.display = "none";
+            }
+        }
+        function selectJob() {
+            const select = document.getElementById('custJob');
+            selectedJobID = select.value;
+            document.getElementById('selectedJobDisplay').style.display = 'block';
+            document.getElementById('jobText').innerText = select.options[select.selectedIndex].text;
+            select.style.display = 'none';
+            document.getElementById('jobSearch').value = '';
+        }
+
+        function renderAssets(assets) {
+            const container = document.getElementById('assetContainer');
+            container.innerHTML = '';
+            assets.forEach(asset => {
+                let div = document.createElement('div');
+                div.className = 'form-check-custom';
+                div.innerHTML = `<input class="form-check-input asset-chk" type="checkbox" value="${asset.VARLIK_KODU}" data-tag="${asset.EK_ETIKET}"><label>${asset.VARLIK_ADI}</label>`;
+                container.appendChild(div);
+            });
+        }
+        function filterAssets() {
+            const term = document.getElementById('assetSearch').value.toLowerCase();
+            const items = document.getElementById('assetContainer').children;
+            for(let item of items) {
+                if(item.innerText.toLowerCase().includes(term)) item.style.display = 'flex'; else item.style.display = 'none';
+            }
+        }
+
+        function renderExistingProducts(products) {
+            const container = document.getElementById('existingContainer');
+            container.innerHTML = '';
+            products.sort((a,b) => a.URUN_ADI.localeCompare(b.URUN_ADI));
+            products.forEach(prod => {
+                let div = document.createElement('div');
+                div.className = 'form-check-custom existing-check';
+                div.innerHTML = `<input class="form-check-input existing-chk" type="checkbox" value="${prod.URUN_ID}" data-name="${prod.URUN_ADI}"><label>${prod.URUN_ADI}</label>`;
+                container.appendChild(div);
+            });
+        }
+        function filterExisting() {
+            const term = document.getElementById('existingSearch').value.toLowerCase();
+            const items = document.getElementById('existingContainer').children;
+            for(let item of items) {
+                if(item.innerText.toLowerCase().includes(term)) item.style.display = 'flex'; else item.style.display = 'none';
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('custName').value = '';
+            document.getElementById('custEmail').value = '';
+            document.getElementById('custAge').value = '';
+            document.getElementById('custDob').value = '';
+            document.getElementById('selectedJobDisplay').style.display = 'none';
+            selectedJobID = null;
+            document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('resultsArea').style.display = 'none';
+        }
+
+        
+        function runEngine() {
+            // --- DEMO KONTROLÜ ---
+            if(SESSION.type === 'DEMO') {
+                let usage = parseInt(localStorage.getItem('demo_usage') || '0');
+                
+                if(usage >= 30) {
+                    alert("⚠️ DEMO SÜRENİZ DOLDU!\n\n30 analiz hakkınızı tamamladınız. Sistemi kullanmaya devam etmek için lütfen PRO lisans satın alınız.");
+                    localStorage.removeItem('user_session'); 
+                    window.location.href = 'index.html'; 
+                    return;
+                }
+
+                                usage++;
+                localStorage.setItem('demo_usage', usage);
+                
+                // UI Güncelle
+                const footerText = document.querySelector('.license-footer strong');
+                if(footerText) footerText.innerText = `DEMO (KALAN: ${30 - usage})`;
+            }
+            
+            const name = document.getElementById('custName').value || "Müşteri";
+            const age = parseInt(document.getElementById('custAge').value) || 0;
+            const gender = document.getElementById('custGender').value;
+            
+            if(!selectedJobID) { alert("Meslek seçimi zorunludur!"); return; }
+
+            let userTags = [];
+            const jobData = DB.JOBS.find(j => j.MESLEK_NO == selectedJobID);
+            if(jobData.ETIKETLER) userTags.push(...jobData.ETIKETLER.toString().split(',').map(t => t.trim()));
+            
+            document.querySelectorAll('.asset-chk:checked').forEach(chk => {
+                let tagRaw = chk.getAttribute('data-tag');
+                if(tagRaw) userTags.push(...tagRaw.toString().split(',').map(t => t.trim()));
+            });
+
+            if (age > 0) {
+                if (age < 25) { userTags.push('GENC', 'OGRENCI_RISK'); }
+                if (age >= 25 && age < 50) { userTags.push('YETISKIN'); }
+                if (age >= 40) { userTags.push('40_YAS_USTU'); }
+                if (age >= 60) { userTags.push('YASLI', 'SAGLIK_ONCELIK'); }
+            }
+            if (gender === 'K') { userTags.push('KADIN', 'ANNELIK'); }
+            if (gender === 'E') { userTags.push('ERKEK'); }
+            userTags = [...new Set(userTags)];
+
+            let ownedIDs = [];
+            let ownedNames = [];
+            document.querySelectorAll('.existing-chk:checked').forEach(chk => {
+                ownedIDs.push(chk.value);
+                ownedNames.push(chk.getAttribute('data-name'));
+            });
+
+            let scoredProducts = [];
+            DB.PRODUCTS.forEach(prod => {
+                if (ownedIDs.includes(prod.URUN_ID)) return; 
+                if(!prod.HEDEF_ETIKETLER) return;
+                
+                let targetTags = prod.HEDEF_ETIKETLER.toString().split(',').map(t => t.trim());
+                let matchScore = 0;
+                targetTags.forEach(target => { if(userTags.includes(target)) matchScore++; });
+
+                if (matchScore > 0) {
+                    if (userTags.includes('YASLI') && prod.HEDEF_ETIKETLER.includes('SAGLIK')) matchScore += 2;
+                    if (userTags.includes('GENC') && prod.HEDEF_ETIKETLER.includes('ELEKTRONIK')) matchScore += 1;
+                    prod.SCORE = matchScore;
+                    scoredProducts.push(prod);
+                }
+            });
+
+            scoredProducts.sort((a, b) => b.SCORE - a.SCORE);
+
+            currentAnalysis = {
+                name: name,
+                job: jobData.MESLEK,
+                age: age,
+                gender: gender,
+                tags: userTags,
+                existing: ownedNames,
+                products: scoredProducts
+            };
+            displayResults();
+        }
+
+        function displayResults() {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'block';
+            document.getElementById('detectedTags').innerHTML = currentAnalysis.tags.map(t => `<span class="badge bg-secondary me-1" style="font-size:9px;">${t}</span>`).join('');
+            const list = document.getElementById('recommendationList');
+            list.innerHTML = '';
+
+            if(currentAnalysis.products.length === 0) {
+                list.innerHTML = '<div class="alert alert-warning">Eksik bir ihtiyaç tespit edilemedi.</div>';
+            } else {
+                currentAnalysis.products.forEach(p => {
+                    let isHighPri = p.SCORE >= 3;
+                    let html = `
+                        <div class="card mb-2 border-0 shadow-sm offer-row">
+                            <div class="card-body py-2 d-flex align-items-center">
+                                <div class="me-3">
+                                    <input type="checkbox" class="form-check-input offer-chk" name="selectedOffers" value="${p.URUN_ID}" checked>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="fw-bold mb-0 ${isHighPri ? 'text-primary' : 'text-dark'}">${p.URUN_ADI}</h6>
+                                        <span class="badge ${isHighPri ? 'bg-success' : 'bg-light text-muted'}">Skor: ${p.SCORE}</span>
+                                    </div>
+                                    <small class="text-muted fst-italic">${p.SATIS_ARGUMANI}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += html;
+                });
+            }
+        }
+
+        function generatePDF() {
+            const selectedIDs = Array.from(document.querySelectorAll('input[name="selectedOffers"]:checked')).map(cb => cb.value);
+            if(selectedIDs.length === 0) { alert("En az bir ürün seçiniz."); return; }
+
+            document.getElementById('p_name').innerText = currentAnalysis.name.toUpperCase();
+            document.getElementById('p_customer_info').innerText = `${currentAnalysis.age > 0 ? currentAnalysis.age + " Yaş" : ""} / ${currentAnalysis.gender === 'E' ? "Erkek" : (currentAnalysis.gender === 'K' ? "Kadın" : "Belirtilmemiş")}`;
+            document.getElementById('p_job').innerText = currentAnalysis.job;
+            document.getElementById('p_date').innerText = new Date().toLocaleDateString();
+            document.getElementById('p_ref').innerText = "TR-" + Math.floor(Math.random() * 100000);
+            
+            if(currentAnalysis.existing && currentAnalysis.existing.length > 0) {
+                document.getElementById('p_existing').innerText = currentAnalysis.existing.join(", ");
+            } else {
+                document.getElementById('p_existing').innerText = "Kayıtlı poliçe yok.";
+            }
+
+            const tableBody = document.getElementById('p_products_table');
+            tableBody.innerHTML = '';
+            
+            const finalProducts = currentAnalysis.products.filter(p => selectedIDs.includes(p.URUN_ID));
+            finalProducts.forEach(p => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td class="align-middle"><h6 class="fw-bold mb-0 text-dark">${p.URUN_ADI}</h6></td>
+                        <td class="align-middle"><small class="text-muted">${p.SATIS_ARGUMANI}</small></td>
+                        <td class="text-end align-middle"><span class="badge bg-success">Teklif Edildi</span></td>
+                    </tr>
+                `;
+            });
+            window.print();
+        }
+
+        function sendMail() {
+            const email = document.getElementById('custEmail').value;
+            if(!email) { alert("E-posta adresi giriniz."); return; }
+            const selectedIDs = Array.from(document.querySelectorAll('input[name="selectedOffers"]:checked')).map(cb => cb.value);
+            const finalProducts = currentAnalysis.products.filter(p => selectedIDs.includes(p.URUN_ID));
+            if(finalProducts.length === 0) { alert("Ürün seçiniz."); return; }
+
+            let subject = `Özel Sigorta Teklifi - ${currentAnalysis.name}`;
+            let body = `Sayın ${currentAnalysis.name},\n\nSizin için yaptığımız risk analizine göre aşağıdaki sigorta ürünlerini öneriyoruz:\n\n`;
+            finalProducts.forEach(p => { body += `- ${p.URUN_ADI}: ${p.SATIS_ARGUMANI}\n`; });
+            body += `\nSaygılarımla,\nBatuhan Bayatlı Sigorta Danışmanlığı`;
+            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+    </script>
+</body>
+</html>
